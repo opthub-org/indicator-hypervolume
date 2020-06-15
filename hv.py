@@ -18,7 +18,7 @@ def main():
     hv = hypervolume(ys)
     ref_point = json.loads(os.getenv('HV_REF_POINT', 'null'))
     score = hv.compute(ref_point)
-    print(score)
+    print(json.dumps({'score': score}))
 
 
 if __name__ == '__main__':
