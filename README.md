@@ -4,7 +4,7 @@ This scorer calculates the hypervolume indicator.
 ## Usage
 ```
 $ python hv.py '{"objective": [1, 0]}' '[{"objective": [0, 1]}, {"objective": [0.5, 0.5]}]'
-0.25
+{"score": 0.25}
 ```
 
 ## Environmental Variables
