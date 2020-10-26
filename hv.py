@@ -10,8 +10,9 @@ from pygmo import hypervolume
 
 
 def main():
-    solution_to_score = json.loads(sys.argv[1])
-    solutions_scored = json.loads(sys.argv[2])
+    with open(sys.argv[1]) as f, open(sys.argv[2]) as g:
+        solution_to_score = json.load(f)
+        solutions_scored = json.load(g)
 
     ys = [s['objective'] for s in solutions_scored]
     ys.append(solution_to_score['objective'])

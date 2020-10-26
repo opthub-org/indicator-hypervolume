@@ -3,7 +3,7 @@ This scorer calculates the hypervolume indicator.
 
 ## Usage
 ```
-$ python hv.py '{"objective": [1, 0]}' '[{"objective": [0, 1]}, {"objective": [0.5, 0.5]}]'
+$ python hv.py <(echo '{"objective": [1, 0]}') <(echo '[{"objective": [0, 1]}, {"objective": [0.5, 0.5]}]')
 {"score": 0.25}
 ```
 
