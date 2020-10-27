@@ -45,6 +45,7 @@ def main():
         ref_point = json.loads(env)
         if not ref_point:
             ref_point = nadir(ys) if len(ys) > 1 else ys[0]
+            _logger.warning('HV_REF_POINT is not specified. It is set to the nadir point.')
         _logger.debug('ref = %s', ref_point)
 
         hv = hypervolume(ys)
