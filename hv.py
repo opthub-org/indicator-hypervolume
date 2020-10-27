@@ -14,15 +14,15 @@ _logger = logging.getLogger(__name__)
 
 
 def main():
-    verbosity = 0
-    if len(sys.argv) > 1:
-        for c in sys.argv[1]:
-            verbosity += -10 if c == 'v' else 10 if c == 'q' else 0
-    log_level = logging.WARNING + verbosity
-    logging.basicConfig(level=log_level)
-    _logger.info('Log level is set to %d.', log_level)
-
     try:
+        verbosity = 0
+        if len(sys.argv) > 1:
+            for c in sys.argv[1]:
+                verbosity += -10 if c == 'v' else 10 if c == 'q' else 0
+        log_level = logging.WARNING + verbosity
+        logging.basicConfig(level=log_level)
+        _logger.info('Log level is set to %d.', log_level)
+
         env = os.getenv('HV_REF_POINT', 'null')
         _logger.debug('env_ref = %s', env)
 
