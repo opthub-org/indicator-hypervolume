@@ -7,7 +7,7 @@ import logging
 import os
 import sys
 
-from pygmo import hypervolume
+from pygmo import hypervolume, nadir
 
 
 _logger = logging.getLogger(__name__)
@@ -22,12 +22,6 @@ def main():
         log_level = logging.WARNING + verbosity
         logging.basicConfig(level=log_level)
         _logger.info('Log level is set to %d.', log_level)
-
-        env = os.getenv('HV_REF_POINT', 'null')
-        _logger.debug('env_ref = %s', env)
-
-        ref_point = json.loads(env)
-        _logger.debug('ref = %s', ref_point)
 
         x = input()
         _logger.debug('input_x = %s', x)
@@ -44,6 +38,14 @@ def main():
         ys = [s['objective'] for s in solutions_scored]
         ys.append(solution_to_score['objective'])
         _logger.debug('ys = %s', ys)
+
+        env = os.getenv('HV_REF_POINT', 'null')
+        _logger.debug('env_ref = %s', env)
+
+        ref_point = json.loads(env)
+        if not ref_point:
+            ref_point = nadir(ys) if len(ys) > 1 else ys[0]
+        _logger.debug('ref = %s', ref_point)
 
         hv = hypervolume(ys)
 
