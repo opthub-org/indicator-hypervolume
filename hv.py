@@ -43,6 +43,8 @@ def main():
 
         ys = [s['objective'] for s in solutions_scored]
         ys.append(solution_to_score['objective'])
+        _logger.debug('ys = %s', ys)
+
         hv = hypervolume(ys)
 
         score = hv.compute(ref_point)
