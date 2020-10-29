@@ -1,10 +1,10 @@
 # Hypervolume
-This scorer calculates the hypervolume indicator.
+The hypervolume indicator.
 
 ## Usage
 ```
-$ echo -e '{"objective": [1, 0]}\n[{"objective": [0, 1]}, {"objective": [0.5, 0.5]}]' | python hv.py
-{"score": 0.25}
+$ python hv.py < population.2obj.txt
+{"score": 1.0}
 ```
 
 ## Environmental Variables
