@@ -46,7 +46,7 @@ solution_to_score_jsonschema = """{
 }"""
 solutions_scored_jsonschema = """{
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Objective function values",
+  "title": "Solutions scored",
   "type": "array",
   "items": {
     "type": "object",
