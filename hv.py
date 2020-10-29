@@ -87,6 +87,8 @@ def load_config(ctx, value):
 def json_list(ctx, param, value):
     """Load a list from a JSON string.
 
+    :param ctx: Click context
+    :param param: Parameter info
     :param value: JSON string
     :return list: Loaded list
     """
@@ -95,6 +97,10 @@ def json_list(ctx, param, value):
     if type(value) not in [list, type(None)]:
         ctx.fail("Invalid option: %s=%s, which must be list, str, or None." % (param.name, value))
     return value
+
+
+def feasible(s):
+    return not s.get('constraint') or np.all(np.array(s['constraint']) <= 0)
 
 
 @click.command(help='Hypervolume indicator.')
@@ -128,8 +134,8 @@ def main(ctx, ref_point, quiet, verbose, config):
     _logger.debug('xs = %s', solutions_scored)
     validate(solutions_scored, json.loads(solutions_scored_jsonschema))
 
-    ys = [s['objective'] for s in solutions_scored if not s.get('constraint') or np.all(np.array(s['constraint'])) <= 0]
-    if np.all(np.array(solution_to_score.get('constraint', [])) <= 0):
+    ys = [s['objective'] for s in solutions_scored if feasible(s)]
+    if feasible(solution_to_score):
         ys.append(solution_to_score['objective'])
     _logger.debug('ys = %s', ys)
 
