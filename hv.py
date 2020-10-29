@@ -128,7 +128,7 @@ def main(ctx, ref_point, quiet, verbose, config):
     _logger.debug('xs = %s', solutions_scored)
     validate(solutions_scored, json.loads(solutions_scored_jsonschema))
 
-    ys = [s['objective'] for s in solutions_scored if np.all(np.array(s.get('constraint', [])) <= 0)]
+    ys = [s['objective'] for s in solutions_scored if not s.get('constraint') or np.all(np.array(s['constraint'])) <= 0]
     if np.all(np.array(solution_to_score.get('constraint', [])) <= 0):
         ys.append(solution_to_score['objective'])
     _logger.debug('ys = %s', ys)
