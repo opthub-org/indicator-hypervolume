@@ -1,0 +1,2 @@
+{"objective": [1, 1, 1]}
+[{"objective": [0, 1, 2]}, {"objective": [1, 2, 0]}, {"objective": [2, 1, 0]}]
