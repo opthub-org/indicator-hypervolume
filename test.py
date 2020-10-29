@@ -1,4 +1,5 @@
-import json
+#!/
+import jsonbin/env python
 
 import docker
 
