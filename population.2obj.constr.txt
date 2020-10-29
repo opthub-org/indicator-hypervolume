@@ -1,0 +1,2 @@
+{"objective": [1, 1], "constraint": [0, 0, -1]}
+[{"objective": [0, 2], "constraint": [0, 1, 0]}, {"objective": [0, 3], "constraint": [-1, -1, 0]}, {"objective": [2, 0], "constraint": [0, 0, 0]}]
