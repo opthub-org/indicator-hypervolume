@@ -101,7 +101,25 @@ def json_list(ctx, param, value):
 
 
 def feasible(s):
+    """Check if a given solution is feasible.
+    :param s: A solution
+    :return: boolean
+    """
     return not s.get('constraint') or np.all(np.array(s['constraint']) <= 0)
+
+
+def is_pareto_efficient(costs):
+    """
+    Find the pareto-efficient points
+    :param costs: An (n_points, n_costs) array
+    :return: A (n_points, ) boolean array, indicating whether each point is Pareto efficient
+    """
+    is_efficient = np.ones(costs.shape[0], dtype = bool)
+    for i, c in enumerate(costs):
+        if is_efficient[i]:
+            is_efficient[is_efficient] = np.any(costs[is_efficient] < c, axis=1)  # Keep any point with a lower cost
+            is_efficient[i] = True  # And keep self
+    return is_efficient
 
 
 @click.command(help='Hypervolume indicator.')
@@ -184,12 +202,14 @@ def main(ctx, ref_point, quiet, verbose, config):
 
     _logger.info('Reference point is %s', ref_point)
 
-    _logger.info('Filter solutions dominating the reference point...')
-    ys = [y for y in ys if pareto_dominance(y, ref_point)]
+    _logger.info('Compute nondominated front...')
+    ys.append(ref_point)
+    ys = np.array(ys)
+    ys = ys[is_pareto_efficient(ys)]
     _logger.debug('ys = %s', ys)
-    _logger.info('...Filtered')
+    _logger.info('...Computed')
 
-    if not ys:
+    if ref_point in ys:
           _logger.warning('No feasible point dominating the reference point. HV is zero.')
           print(json.dumps({'score': 0}))
           ctx.exit(0)
