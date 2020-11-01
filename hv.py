@@ -6,7 +6,7 @@ Hypervolume indicator.
 import json
 import logging
 from os import path
-from traceback as format_exc
+from traceback import format_exc
 
 import click
 from jsonschema import validate, ValidationError
