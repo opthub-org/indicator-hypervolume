@@ -118,7 +118,7 @@ def main(ctx, ref_point, quiet, verbose, config):
     logging.basicConfig(level=log_level)
     _logger.info('Log level is set to %d.', log_level)
 
-    _logger.info('Validate ref_point...')
+    _logger.info('Validate HV_REF_POINT...')
     validate(ref_point, json.loads(ref_point_jsonschema))
     _logger.debug('ref_point = %s', ref_point)
     _logger.info('...Validated')
@@ -158,8 +158,9 @@ def main(ctx, ref_point, quiet, verbose, config):
     else:
         _logger.warning('Current solution is not feasible.')
     _logger.debug('ys = %s', ys)
-    _logger.info('%d / %d solutions are feasible.', len(ys), len(solutions_scored) + 1)
     _logger.info('...Filtered')
+
+    _logger.info('%d / %d solutions are feasible.', len(ys), len(solutions_scored) + 1)
 
     if not ys:  # no feasible point
         _logger.warning('No feasible point. HV is zero.')
@@ -184,6 +185,7 @@ def main(ctx, ref_point, quiet, verbose, config):
 
     _logger.info('Filter solutions dominating the reference point...')
     ys = [y for y in ys if pareto_dominance(y, ref_point)]
+    _logger.debug('ys = %s', ys)
     _logger.info('...Filtered')
 
     if ys:
