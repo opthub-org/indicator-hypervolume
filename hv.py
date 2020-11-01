@@ -197,17 +197,23 @@ def main(ctx, ref_point, quiet, verbose, config):
 
     _logger.info('Reference point is %s', ref_point)
 
+    # PyGMO's HV algorithm (WFG-algorithm) has time complexity between
+    # Omega(n^{d/2} log n) and O(n^{d-1}) for n points of d dimensions.
+    # To accelerate HV computation, points with no HV contribution are excluded.
+
+    # 1. Remove points that do not dominates the reference point in O(dn) time
     _logger.info('Filter points not dominating the reference point...')
     ys = np.array([y for y in ys if pareto_dominance(y, ref_point)])
     _logger.debug('ys = %s', ys)
     _logger.info('...Filtered')
 
-    # To accelerate HV computation, points with no HV contribution are excluded.
+    # 2. Remove duplicate points in O(dn) time
     _logger.info('Uniquify points...')
     ys = np.unique(ys, axis=0)
     _logger.debug('ys = %s', ys)
     _logger.info('...Uniquified')
 
+    # 3. Remove dominated points in O(dn^2) time
     _logger.info('Compute nondominated front...')
     ys = ys[is_pareto_efficient(ys)]
     _logger.debug('ys = %s', ys)
