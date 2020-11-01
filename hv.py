@@ -87,6 +87,8 @@ def load_config(ctx, value):
 def json_list(ctx, param, value):
     """Load a list from a JSON string.
 
+    :param ctx: Click context
+    :param param: Parameter info
     :param value: JSON string
     :return list: Loaded list
     """
@@ -204,7 +206,7 @@ def main(ctx, ref_point, quiet, verbose, config):
 if __name__ == '__main__':
     try:
         _logger.info('Start')
-        main(auto_envvar_prefix="HV")  # pylint: disable=no-value-for-parameter
+        main(auto_envvar_prefix="HV")  # pylint: disable=no-value-for-parameter,unexpected-keyword-arg
         _logger.info('Successfully finished')
     except Exception as e:
         _logger.error(e)
