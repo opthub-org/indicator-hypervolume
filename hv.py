@@ -6,6 +6,7 @@ Hypervolume indicator.
 import json
 import logging
 from os import path
+from traceback as format_exc
 
 import click
 from jsonschema import validate, ValidationError
@@ -211,5 +212,5 @@ if __name__ == '__main__':
         main(auto_envvar_prefix="HV")  # pylint: disable=no-value-for-parameter,unexpected-keyword-arg
         _logger.info('Successfully finished')
     except Exception as e:
-        _logger.error(e)
+        _logger.error(format_exc())
         print(json.dumps({'score': None, 'error': str(e)}))
