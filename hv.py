@@ -188,7 +188,7 @@ def main(ctx, ref_point, quiet, verbose, config):
     _logger.debug('ys = %s', ys)
     _logger.info('...Filtered')
 
-    if ys:
+    if not ys:
           _logger.warning('No feasible point dominating the reference point. HV is zero.')
           print(json.dumps({'score': 0}))
           ctx.exit(0)
