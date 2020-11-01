@@ -137,11 +137,6 @@ def main(ctx, ref_point, quiet, verbose, config):
     logging.basicConfig(level=log_level)
     _logger.info('Log level is set to %d.', log_level)
 
-    _logger.info('Validate HV_REF_POINT...')
-    validate(ref_point, json.loads(ref_point_jsonschema))
-    _logger.debug('ref_point = %s', ref_point)
-    _logger.info('...Validated')
-
     _logger.info('Recieve a solution to score...')
     x = input()
     _logger.debug('input_x = %s', x)
@@ -202,14 +197,17 @@ def main(ctx, ref_point, quiet, verbose, config):
 
     _logger.info('Reference point is %s', ref_point)
 
+    _logger.info('Filter points not dominating the reference point...')
+    ys = np.array([y for y in ys if pareto_dominance(y, ref_point)])
+    _logger.debug('ys = %s', ys)
+    _logger.info('...Filtered')
+
     _logger.info('Compute nondominated front...')
-    ys.append(ref_point)
-    ys = np.array(ys)
     ys = ys[is_pareto_efficient(ys)]
     _logger.debug('ys = %s', ys)
     _logger.info('...Computed')
 
-    if ref_point in ys:
+    if len(ys) == 0:
           _logger.warning('No feasible point dominating the reference point. HV is zero.')
           print(json.dumps({'score': 0}))
           ctx.exit(0)
