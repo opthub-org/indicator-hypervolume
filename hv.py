@@ -202,13 +202,19 @@ def main(ctx, ref_point, quiet, verbose, config):
     _logger.debug('ys = %s', ys)
     _logger.info('...Filtered')
 
+    # To accelerate HV computation, points with no HV contribution are excluded.
+    _logger.info('Uniquify points...')
+    ys = np.unique(ys, axis=0)
+    _logger.debug('ys = %s', ys)
+    _logger.info('...Uniquified')
+
     _logger.info('Compute nondominated front...')
     ys = ys[is_pareto_efficient(ys)]
     _logger.debug('ys = %s', ys)
     _logger.info('...Computed')
 
     if len(ys) == 0:
-          _logger.warning('No feasible point dominating the reference point. HV is zero.')
+          _logger.warning('No point dominates the reference point. HV is zero.')
           print(json.dumps({'score': 0}))
           ctx.exit(0)
 
