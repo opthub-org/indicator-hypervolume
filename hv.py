@@ -10,7 +10,7 @@ from os import path
 import click
 from jsonschema import validate, ValidationError
 import numpy as np
-from pygmo import hypervolume, nadir
+from pygmo import hypervolume, nadir, pareto_dominance
 import yaml
 
 
@@ -97,6 +97,10 @@ def json_list(ctx, param, value):
     return value
 
 
+def feasible(s):
+    return not s.get('constraint') or np.all(np.array(s['constraint']) <= 0)
+
+
 @click.command(help='Hypervolume indicator.')
 @click.option('-r', '--ref-point', callback=json_list, default=None, help='Reference points.')
 @click.option('-q', '--quiet', count=True, help='Be quieter.')
@@ -112,26 +116,48 @@ def main(ctx, ref_point, quiet, verbose, config):
     logging.basicConfig(level=log_level)
     _logger.info('Log level is set to %d.', log_level)
 
+    _logger.info('Validate ref_point...')
     validate(ref_point, json.loads(ref_point_jsonschema))
+    _logger.debug('ref_point = %s', ref_point)
+    _logger.info('...Validated')
 
+    _logger.info('Recieve a solution to score...')
     x = input()
     _logger.debug('input_x = %s', x)
+    _logger.info('...Recieved')
 
+    _logger.info('Recieve solutions scored...')
     xs = input()
     _logger.debug('input_xs = %s', xs)
+    _logger.info('...Recieved')
 
+    _logger.info('Parse a solution to score...')
     solution_to_score = json.loads(x)
     _logger.debug('x = %s', solution_to_score)
-    validate(solution_to_score, json.loads(solution_to_score_jsonschema))
+    _logger.info('...Parsed')
 
+    _logger.info('Validate a solution to score...')
+    validate(solution_to_score, json.loads(solution_to_score_jsonschema))
+    _logger.info('...Validated')
+
+    _logger.info('Parse solutions scored...')
     solutions_scored = json.loads(xs)
     _logger.debug('xs = %s', solutions_scored)
-    validate(solutions_scored, json.loads(solutions_scored_jsonschema))
+    _logger.info('...Parsed')
 
-    ys = [s['objective'] for s in solutions_scored if np.all(np.array(s.get('constraint', [])) <= 0)]
-    if np.all(np.array(solution_to_score.get('constraint', [])) <= 0):
+    _logger.info('Validate solutions scored...')
+    validate(solutions_scored, json.loads(solutions_scored_jsonschema))
+    _logger.info('...Validated')
+
+    _logger.info('Filter feasible solutions...')
+    ys = [s['objective'] for s in solutions_scored if feasible(s)]
+    if feasible(solution_to_score):
         ys.append(solution_to_score['objective'])
+    else:
+        _logger.warning('Current solution is not feasible.')
     _logger.debug('ys = %s', ys)
+    _logger.info('%d / %d solutions are feasible.', len(ys), len(solutions_scored) + 1)
+    _logger.info('...Filtered')
 
     if not ys:  # no feasible point
         _logger.warning('No feasible point. HV is zero.')
@@ -146,19 +172,40 @@ def main(ctx, ref_point, quiet, verbose, config):
             ctx.exit(0)
         ref_point = nadir(ys)
         _logger.warning('The nadir point is set to %s.' % ref_point)
-    _logger.debug('ref = %s', ref_point)
+    _logger.debug('ref_point = %s', ref_point)
+
+    _logger.info('Validate the reference point...')
     validate(ref_point, json.loads(ref_point_jsonschema))
+    _logger.info('...Validated')
 
+    _logger.info('Reference point is %s', ref_point)
+
+    _logger.info('Filter solutions dominating the reference point...')
+    ys = [y for y in ys if pareto_dominance(y, ref_point)]
+    _logger.info('...Filtered')
+
+    if ys:
+          _logger.warning('No feasible point dominating the reference point. HV is zero.')
+          print(json.dumps({'score': 0}))
+          ctx.exit(0)
+
+    _logger.info('Initialize a HV calculator...')
     hv = hypervolume(ys)
+    _logger.info('...Initialized')
 
+    _logger.info('Compute HV...')
     score = hv.compute(ref_point)
     _logger.debug('score = %s', score)
+    _logger.info('...Computed')
+
     print(json.dumps({'score': score}))
 
 
 if __name__ == '__main__':
     try:
+        _logger.info('Start')
         main(auto_envvar_prefix="HV")  # pylint: disable=no-value-for-parameter
+        _logger.info('Successfully finished')
     except Exception as e:
         _logger.error(e)
         print(json.dumps({'score': None, 'error': str(e)}))
