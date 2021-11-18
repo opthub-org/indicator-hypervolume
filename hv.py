@@ -34,12 +34,14 @@ solution_to_score_jsonschema = """{
     "objective": {
       "type": "array",
       "minItems": 1,
-      "items": {"type": "number"}
+      "items": {
+        "type": ["number", "null"]
+      }
     },
     "constraint": {
       "OneOf": [
         {"type": "number"},
-        {"type": "array", "minItems": 1, "items": {"type": "number"}}
+        {"type": "array", "minItems": 1, "items": {"type": ["number", "null"]}}
       ]
     }
   },
@@ -56,13 +58,13 @@ solutions_scored_jsonschema = """{
         "type": "array",
         "minItems": 1,
         "items": {
-          "type": "number"
+          "type": ["number", "null"]
         }
       },
       "constraint": {
         "OneOf": [
           {"type": "number"},
-          {"type": "array", "minItems": 1, "items": {"type": "number"}}
+          {"type": "array", "minItems": 1, "items": {"type": ["number", "null"]}}
         ]
       }
     },
