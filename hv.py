@@ -9,7 +9,7 @@ from os import path
 from traceback import format_exc
 
 import click
-from jsonschema import validate, ValidationError
+from jsonschema import validate
 import numpy as np
 from pygmo import hypervolume, nadir, pareto_dominance
 import yaml
@@ -26,27 +26,27 @@ ref_point_jsonschema = """{
     {"type": "array", "minItems": 1, "items": {"type": "number"}}
   ]
 }"""
+
 solution_to_score_jsonschema = """{
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Solution to score",
   "type": "object",
   "properties": {
     "objective": {
-      "type": "array",
-      "minItems": 1,
-      "items": {
-        "type": ["number", "null"]
-      }
+      "OneOf": [
+        {"type": "null"},
+        {"type": "array", "minItems": 1, "items": {"type": "number"}}
+      ]
     },
     "constraint": {
       "OneOf": [
-        {"type": "number"},
-        {"type": "array", "minItems": 1, "items": {"type": ["number", "null"]}}
+        {"type": ["number", "null"]},
+        {"type": "array", "minItems": 1, "items": {"type": "number"}}
       ]
     }
-  },
-  "required": ["objective"]
+  }
 }"""
+
 solutions_scored_jsonschema = """{
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Solutions scored",
@@ -55,28 +55,27 @@ solutions_scored_jsonschema = """{
     "type": "object",
     "properties": {
       "objective": {
-        "type": "array",
-        "minItems": 1,
-        "items": {
-          "type": ["number", "null"]
-        }
+        "OneOf": [
+          {"type": "null"},
+          {"type": "array", "minItems": 1, "items": {"type": "number"}}
+        ]
       },
       "constraint": {
         "OneOf": [
-          {"type": "number"},
-          {"type": "array", "minItems": 1, "items": {"type": ["number", "null"]}}
+          {"type": ["number", "null"]},
+          {"type": "array", "minItems": 1, "items": {"type": "number"}}
         ]
       }
-    },
-    "required": ["objective"]
+    }
   }
 }"""
 
 
-def load_config(ctx, value):
+def load_config(ctx, self, value):
     """Load `ctx.default_map` from a file.
 
     :param ctx: Click context
+    :param self: Param object
     :param value: File name
     :return dict: Loaded config
     """
@@ -107,7 +106,9 @@ def feasible(s):
     :param s: A solution
     :return: boolean
     """
-    return not s.get('constraint') or np.all(np.array(s['constraint']) <= 0)
+    o = s.get('objective')
+    c = s.get('constraint')
+    return (None not in np.array(o)) and (c is None or np.all(np.array(c) <= 0.0))
 
 
 def is_pareto_efficient(costs):
