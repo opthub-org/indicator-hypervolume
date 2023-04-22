@@ -1,0 +1,3 @@
+-r requirements.txt
+docker >= 4.0
+pygmo >= 2.11
