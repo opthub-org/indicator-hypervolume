@@ -15,9 +15,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Build the Docker image
-      run: |
-        DATE=$(date +%s)
-        docker build . --file Dockerfile --tag opthub/hypervolume:latest
+      run: docker build . --file Dockerfile --tag opthub/hypervolume:latest
     - name: Test the Docker image
       run: |
         cat population.2obj.txt | docker run --rm -i opthub/hypervolume:latest
