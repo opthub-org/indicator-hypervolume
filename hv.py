@@ -104,8 +104,7 @@ def json_list(ctx, param, value):
         value = json.loads(value)
     if not isinstance(value, (list, type(None))):
         ctx.fail(
-            "Invalid option: %s=%s, which must be list, str, or None."
-            % (param.name, value)
+            f"Invalid option: {param.name}={value}, which must be list, str, or None."
         )
     return value
 
@@ -136,6 +135,86 @@ def is_pareto_efficient(costs):
             )  # Keep any point with a lower cost
             is_efficient[i] = True  # And keep self
     return is_efficient
+
+
+def compute_hv(solution_to_score, solutions_scored, ref_point):
+    """Compute hypervolume."""
+    LOGGER.info("Filter feasible solutions...")
+    feasible_objectives = [s["objective"] for s in solutions_scored if feasible(s)]
+    if feasible(solution_to_score):
+        feasible_objectives.append(solution_to_score["objective"])
+    else:
+        LOGGER.warning("Current solution is not feasible.")
+    LOGGER.debug("feasible_objectives = %s", feasible_objectives)
+    LOGGER.info("...Filtered")
+
+    LOGGER.info(
+        "%d / %d solutions are feasible.",
+        len(feasible_objectives),
+        len(solutions_scored) + 1,
+    )
+
+    if not feasible_objectives:  # no feasible point
+        LOGGER.warning("No feasible point. HV is zero.")
+        return 0
+
+    if not ref_point:
+        LOGGER.warning("HV_REF_POINT is not specified. Try to use the nadir point.")
+        if (
+            len(feasible_objectives) == 1
+        ):  # HV=0 since nadir() requires at least two feasible points
+            LOGGER.warning(
+                "The nadir point requires at least two feasible points. HV is zero."
+            )
+            return 0
+        ref_point = nadir(feasible_objectives)
+        LOGGER.warning("The nadir point is set to %s.", ref_point)
+    LOGGER.debug("ref_point = %s", ref_point)
+
+    LOGGER.info("Validate the reference point...")
+    validate(ref_point, json.loads(REF_POINT_JSONSCHEMA))
+    LOGGER.info("...Validated")
+    LOGGER.info("Reference point is %s", ref_point)
+
+    # PyGMO's HV algorithm (WFG-algorithm) has time complexity between
+    # Omega(n^{d/2} log n) and O(n^{d-1}) for n points of d dimensions.
+    # To accelerate HV computation, points with no HV contribution are excluded.
+
+    # 1. Remove points that do not dominates the reference point in O(dn) time
+    LOGGER.info("Filter points not dominating the reference point...")
+    hv_objectives = np.array(
+        [y for y in feasible_objectives if pareto_dominance(y, ref_point)]
+    )
+    LOGGER.debug("hv_objectives = %s", hv_objectives)
+    LOGGER.info("...Filtered")
+
+    # 2. Remove duplicate points in O(dn) time
+    LOGGER.info("Uniquify points...")
+    unique_hv_objectives = np.unique(hv_objectives, axis=0)
+    LOGGER.debug("unique_hv_objectives = %s", unique_hv_objectives)
+    LOGGER.info("...Uniquified")
+
+    # 3. Remove dominated points in O(dn^2) time
+    LOGGER.info("Compute nondominated front...")
+    efficient_objectives = unique_hv_objectives[
+        is_pareto_efficient(unique_hv_objectives)
+    ]
+    LOGGER.debug("efficient_objectives = %s", efficient_objectives)
+    LOGGER.info("...Computed")
+
+    if len(efficient_objectives) == 0:
+        LOGGER.warning("No point dominates the reference point. HV is zero.")
+        return 0
+
+    LOGGER.info("Initialize a HV calculator...")
+    hvi = hypervolume(efficient_objectives)
+    LOGGER.info("...Initialized")
+
+    LOGGER.info("Compute HV...")
+    score = hvi.compute(ref_point)
+    LOGGER.debug("score = %s", score)
+    LOGGER.info("...Computed")
+    return score
 
 
 @click.command(help="Hypervolume indicator.")
@@ -190,86 +269,7 @@ def main(ctx, ref_point, quiet, verbose, config):  # pylint: disable=unused-argu
     validate(solutions_scored, json.loads(SOLUTIONS_SCORED_JSONSCHEMA))
     LOGGER.info("...Validated")
 
-    LOGGER.info("Filter feasible solutions...")
-    feasible_objectives = [s["objective"] for s in solutions_scored if feasible(s)]
-    if feasible(solution_to_score):
-        feasible_objectives.append(solution_to_score["objective"])
-    else:
-        LOGGER.warning("Current solution is not feasible.")
-    LOGGER.debug("feasible_objectives = %s", feasible_objectives)
-    LOGGER.info("...Filtered")
-
-    LOGGER.info(
-        "%d / %d solutions are feasible.",
-        len(feasible_objectives),
-        len(solutions_scored) + 1,
-    )
-
-    if not feasible_objectives:  # no feasible point
-        LOGGER.warning("No feasible point. HV is zero.")
-        print(json.dumps({"score": 0}))
-        ctx.exit(0)
-
-    if not ref_point:
-        LOGGER.warning("HV_REF_POINT is not specified. Try to use the nadir point.")
-        if (
-            len(feasible_objectives) == 1
-        ):  # HV=0 since nadir() requires at least two feasible points
-            LOGGER.warning(
-                "The nadir point requires at least two feasible points. HV is zero."
-            )
-            print(json.dumps({"score": 0}))
-            ctx.exit(0)
-        ref_point = nadir(feasible_objectives)
-        LOGGER.warning("The nadir point is set to %s.", ref_point)
-    LOGGER.debug("ref_point = %s", ref_point)
-
-    LOGGER.info("Validate the reference point...")
-    validate(ref_point, json.loads(REF_POINT_JSONSCHEMA))
-    LOGGER.info("...Validated")
-
-    LOGGER.info("Reference point is %s", ref_point)
-
-    # PyGMO's HV algorithm (WFG-algorithm) has time complexity between
-    # Omega(n^{d/2} log n) and O(n^{d-1}) for n points of d dimensions.
-    # To accelerate HV computation, points with no HV contribution are excluded.
-
-    # 1. Remove points that do not dominates the reference point in O(dn) time
-    LOGGER.info("Filter points not dominating the reference point...")
-    hv_objectives = np.array(
-        [y for y in feasible_objectives if pareto_dominance(y, ref_point)]
-    )
-    LOGGER.debug("hv_objectives = %s", hv_objectives)
-    LOGGER.info("...Filtered")
-
-    # 2. Remove duplicate points in O(dn) time
-    LOGGER.info("Uniquify points...")
-    unique_hv_objectives = np.unique(hv_objectives, axis=0)
-    LOGGER.debug("unique_hv_objectives = %s", unique_hv_objectives)
-    LOGGER.info("...Uniquified")
-
-    # 3. Remove dominated points in O(dn^2) time
-    LOGGER.info("Compute nondominated front...")
-    efficient_objectives = unique_hv_objectives[
-        is_pareto_efficient(unique_hv_objectives)
-    ]
-    LOGGER.debug("efficient_objectives = %s", efficient_objectives)
-    LOGGER.info("...Computed")
-
-    if len(efficient_objectives) == 0:
-        LOGGER.warning("No point dominates the reference point. HV is zero.")
-        print(json.dumps({"score": 0}))
-        ctx.exit(0)
-
-    LOGGER.info("Initialize a HV calculator...")
-    hvi = hypervolume(efficient_objectives)
-    LOGGER.info("...Initialized")
-
-    LOGGER.info("Compute HV...")
-    score = hvi.compute(ref_point)
-    LOGGER.debug("score = %s", score)
-    LOGGER.info("...Computed")
-
+    score = compute_hv(solution_to_score, solutions_scored, ref_point)
     print(json.dumps({"score": score}))
 
 
