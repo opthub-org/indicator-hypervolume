@@ -1,4 +1,5 @@
 click ~= 8.1
 importlib-metadata ~=6.0
 jsonschema ~= 4.17
+numpy ~= 1.23
 PyYAML ~= 6.0
