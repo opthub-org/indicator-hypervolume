@@ -17,6 +17,6 @@ jobs:
     - name: Build the Docker image
       run: |
         DATE=$(date +%s)
-        docker build . --file Dockerfile --tag opthub/hypervolume:$DATE
+        docker build . --file Dockerfile --tag opthub/hypervolume:latest
     - name: Test the Docker image
-      run: cat population.2obj.txt | docker run --rm -i opthub/hypervolume:$DATE
+      run: cat population.2obj.txt | docker run --rm -i opthub/hypervolume:latest
