@@ -1,6 +1,5 @@
-#!/
-import jsonbin/env python
-
+#!/bin/env python
+"""Test docker image"""
 import docker
 
 
