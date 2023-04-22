@@ -1,6 +1,6 @@
-FROM mikebentley15/pagmo2:2.11.3
-ENV LC_ALL=C.UTF-8 LANG=C.UTF-8
+FROM pagmo2/manylinux228_x86_64_with_deps
 COPY . /bench
 WORKDIR /bench
-RUN pip3 install -r requirements.txt
+RUN yum install -y python39
+RUN pip3 install -U pip && pip3 install -r requirements.txt
 ENTRYPOINT ["python3", "hv.py"]
