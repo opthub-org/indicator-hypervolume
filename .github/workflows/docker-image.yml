@@ -18,6 +18,6 @@ jobs:
       run: docker build . --file Dockerfile --tag opthub/hypervolume:latest
     - name: Test the Docker image
       run: |
-        cat population.2obj.txt | docker run --rm -i opthub/hypervolume:latest
-        cat population.2obj.constr.txt | docker run --rm -i opthub/hypervolume:latest
-        cat population.3obj.txt | docker run --rm -i opthub/hypervolume:latest
+        time cat population.2obj.txt | docker run --rm -i opthub/hypervolume:latest
+        time cat population.2obj.constr.txt | docker run --rm -i opthub/hypervolume:latest
+        time cat population.3obj.txt | docker run --rm -i opthub/hypervolume:latest
